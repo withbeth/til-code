@@ -98,48 +98,54 @@ ${toc}
   - pod 1: n containers 가능은 하나 보통 1:1 관계
   - n개 가질수 있는 경우는 helper containers like sidecar처럼. 하지만 관리가 어렵다?
   - 보통 pod 라이프사이클을 같이 가지고 가야하는데 이부분을 k8s가 책임짐
-  - 그럼 실제로 어떤 흐름으로 pod이 만들어지는가? => later
-  - 로드밸런싱은 어떻게 하는가? => later section
+  - Q. 그럼 실제로 어떤 흐름으로 pod이 만들어지는가? => later section
+  - Q. 로드밸런싱은 어떻게 하는가? => later section
   - 하나의 팟안에 있는 컨테이너들은 같은 스토리지, 네트워크 스페이스를 공유하기에 localhost로 서로 연결이 가능하다
   - how to deploy pods?
-  - kubectl run image —image imagename
-  - it deploys a container after creating a pod.
-  - first, create a pod
-  - second, deploy instance of image
-  - container is instance of image?
+    - `kubectl run image —image imagename`
+    - it deploys a container after creating a pod.
+    - first, create a pod
+    - second, deploy instance of image
+  - Q. container is an instance of image?
   - kubectl get pods으로 팟 리스트, 스테이트를 볼스있다
-  - 그러면 어떻게 이 팟에 유저가 접근가능할까?
+  - Q. 그러면 어떻게 이 팟에 유저가 접근가능할까? =. later section
 
-240202 어제 재택하며 못함.. 0131꺼 이미지 붙여넣기
+### 240202
+
+> 어제 재택하며 못함.. 0131꺼 이미지 붙여넣기
 
 - 22. pods w/ yaml
+
   - yaml이용해 팟 생성가능.
   - 마치 도커파일처럼.
   - 4 root elems
-  - apiversion
-  - kind. not name
+  - 1. apiversion
+  - 2. kind. not name
     - 만드려는 쿠버 객체 타입(팟, 서비스, 레플셋,…)
-  - zero payload 이점?
-  - metadata dict
+  - 3. metadata
+    - dict
     - k8s가 이해가능한 필드만 정의해야한다
     - name : should be unique?
     - labels like tag ex BE
       - 레이블은 뭐든지 정의 가능
-  - spec << here
+  - 4. spec
     - 이미지, 자원등을 명시
     - kind마다 명시하는 것이 달라질수 있어 doc참고가 필요
     - containers
       - image
       - name
   - how to create a pod
-    - kubectl create -f pod-file-name
-    - or use apply
+    - `kubectl create -f pod-file-name`
+    - or use `apply`
   - how to see details?
-    - kubectl describe pod-name
-- 23. demo pods w/ yaml
-  - create vs run?
-- 24. practice test introduction
-- 24 - 28. practice test and solution
-  —-
+    - `kubectl describe pod-name`
 
-replica set
+- 23. demo pods w/ yaml
+
+  - create vs run?
+
+- 24. practice test introduction
+
+- 25 - 28. practice test and solution
+
+- 29. replica set
