@@ -22,11 +22,41 @@
 
 Q. 제네릭 메서드란?
 
-## 31. Use bounded wildcards to increase API flexibility
+## 31. Use bounded wildcards to increase API flexibility (240204)
 
 > API 유연성을 높이려면 한정적 와일드카드를 사용하라
 
-Q. 한정적 와일드카드란?
+### TL;DR
+
+> 유연성을 극대화하려면 원소의 생산자, 소비자용 입력 매개변수에 와일드카드 타입을 사용하라.
+>
+> PECS (Producer-Extends, Consumer-Super)
+
+### WHO is WHO?
+
+- 누가 생산자? `void push(Collection<? extends E> src)`
+- 누가 소비자? `void pop(Collection<? super E> dst)`
+
+### Q. 기준?
+
+> 필드.
+
+- 매개변수로 인해, 필드가 "생산"될 경우,
+- 매개변수로 인해, 필드를 "소비"할경우,
+
+### Q. 왜 생산자는 하위타입을 받나?
+
+- 입력받는 객체를 통해, 상위 객체에 추가 되므로.
+- 반대로, 소비자는 공급받는 객체를, 상위 객체에 추가하여 소비하므로, 상위타입을 받는다.
+
+- 예: `Number one = new Integer(1)`
+
+### One more thing
+
+입력 매개변수로서 E vs ?
+
+- 공개API에, 메서드 선언에 타입매개변수가 하나라면, 와일드카드 is better.
+- Collection에 와일드카드있다면 null밖에 안들어가니, helper를.
 
 ## [x] 32. Combine generics and varargs judiciously (240128)
 
@@ -263,6 +293,5 @@ From [JavaDoc](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html) :
         Objects.requireNonNull(annotationClass);
         return annotationClass.cast(declaredAnnotations().get(annotationClass));
     }
-
 
 ```
