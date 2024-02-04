@@ -25,7 +25,7 @@ Q. 제네릭 메서드란?
 ## 31. Use bounded wildcards to increase API flexibility
 
 > API 유연성을 높이려면 한정적 와일드카드를 사용하라
- 
+
 Q. 한정적 와일드카드란?
 
 ## [x] 32. Combine generics and varargs judiciously (240128)
@@ -40,7 +40,6 @@ Q. 한정적 와일드카드란?
 > 1. 가변인수 호출시 생성되는 제네릭 배열에 아무것도 저장 or overwrite하지 않아야 한다.
 > 2. 배열의 참조가 밖으로 노출되지 않아야 한다.
 > 3. `@SafeVarargs`를 달아 메서드가 타입안정함을 컴파일러에게 알려야 한다.
-
 
 ### Detail
 
@@ -77,9 +76,11 @@ class Foo {
 > 따라서 컴파일러는 제네릭 타입으로 가변인수 선언시 경고를 내보낸다.
 
 #### Q. 힙오염이란?
+
 > 매개변수 유형이 서로 다른 타입을 참조할때 발생하는 문제
 
 #### Q. 힙오염이 생기면 어떤 문제가 생기죠? 왜 안좋은 거죠?
+
 > 컴파일러가 자동생성한 형변환이 실패할 가능성이 생긴다.
 > 즉, 제네릭이 제공하는 타입안정성에 구멍이 뚫린다.
 
@@ -118,6 +119,7 @@ public class HeapPollution {
 #### Q. 그럼 어떻게 제네릭 가변인수를 "안전" 하게 사용 가능한가요?
 
 > 다음 3가지 조건을 만족시 "타입 안전"하게 가변인수를 사용 가능.
+>
 > 1. 가변인수 호출시 생성되는 제네릭 배열에 아무것도 저장 or overwrite하지 않아야 한다.
 > 2. 배열의 참조가 밖으로 노출되지 않아야 한다.
 > 3. `@SafeVarargs`를 달아 메서드가 타입안정함을 컴파일러에게 알려야 한다.
@@ -137,7 +139,130 @@ class Foo {
 }
 ```
 
-
-## 33. Consider typesafe heterogeneous containers
+## 33. Consider typesafe heterogeneous containers p198-205 (240204)
 
 > 타입 안전한 이종 컨테이너를 고려하라
+
+### TL;DR
+
+- 일반적인 제네릭형태에서는, 한 컨테이너가 다룰 수 있는 `타입매개변수 수`가 고정되어있다.
+  - 예: `Set<E>, Map<K,V>, ThreadLocal<T>, AtomicReference<T>`
+  - 이때, 매개변수화 되는 대상은, 원소가 아닌, 컨테이너 자신.
+- 하지만, 컨테이너 자체가 아닌, KEY를 타입매개변수로 바꾸면, 위 제약이 없는, 타입 안전한 이종 컨테이너를 만들수 있다.
+- 타입안전한 이종컨테이너는, Class를 KEY로 쓰며, 이렇게 쓰이는 Class객체를 타입 토큰이라 한다.
+- 또한 직접 구현한 키 타입도 쓸수 있다.
+
+### Problem
+
+> 한 컨테이너가 다를 수 있는 타입매개 변수 수가 고정되어있다.
+
+### Solution
+
+> 컨테이너 자체가 아닌, KEY를 타입매개변수로 이용하는, 타입 안정 이종 컨테이너 사용.
+
+### Q. 타입안정한 이종 컨테이너란?
+
+> KEY를 타입매개변수로 사용하는 컨테이너.
+> Class객체를 KEY로 쓰며, 이렇게 쓰이는 Class객체를 타입 토큰이라 한다.
+
+### Q. 그럼 타입 토큰이란?
+
+> 컴파일 타입 정보와 런타임 타입 정보를 알아내기 위해, 메서드들이 주고 받는 class 리터럴
+> 예: String.class, Integer.class
+
+- class 리터럴의 타입은, class가 아닌 `Class<T>`이다.
+  - = class의 클래스는, Generic.
+- String.class의 타입은, `Class<String>`
+- Integer.class의 타입은, `Class<Integer>`
+
+### Q. class 리터럴이란?
+
+From [Java tutorial - DataTypes](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html):
+
+> There's a special kind of literal called a class literal,
+> formed by taking a type name and appending ".class";
+> for example, String.class.
+> This refers to the object (of type Class) that represents the type itself.
+
+- 타입 자체를 나타내는 클래스 타입 객체를 나타낸다.
+- 즉, `Class<T>`를 클래스 리터럴을 이용해 획득 가능.
+
+From [Java tutorial - Class Literals as Runtime-Type Tokens](https://docs.oracle.com/javase/tutorial/extra/generics/literals.html):
+
+> One of the changes in JDK 5.0 is that the class java.lang.Class is generic
+> for something other than a container class.
+> Now that Class has a type parameter T, you might well ask, what does T stand for?
+> It stands for the type that the Class object is representing.
+>
+> For example,
+> the type of String.class is `Class<String>`,
+> and the type of Serializable.class is `Class<Serializable>`.
+> This can be used to improve the type safety of your reflection code.
+>
+> In particular, since the newInstance() method in Class now returns a T,
+> you can get more precise types when creating objects reflectively.
+
+- JDK5부터, class 클래스는 Generic해지며, 타입 파라미터를 가질수 있게 되었다.
+- 이를 통해, 리플렉션사용시 타입안전성을 향상시킬수 있다.
+
+### Q. `Class<T>`가 뭐죠..?
+
+- 특정 타입 Class의 인스턴스.
+- 특정 클래스의 런타임 속성을 조회, 조작, 검사할수 있는 불변 객체
+- JVM의 클래스로더에서, 클래스 파일 로딩 완료시, 해당 클래스 타입 불변 Class 객체를 생성하여 Heap에 저장.
+
+- 이 객체는, 클래스 리터럴을 이용해 획득 가능.
+
+  - 클래스.class
+  - 인스턴스.getClass()
+  - Class.forName("클래스명")
+
+- Reflection API의 엔트리 포인트로도 사용된다.
+  - 해당 Class 객체를 이용해 Constructor, Method, Field 인스턴스 접근 및 조작 가능.
+  - refer [Java tutorial](https://docs.oracle.com/javase/tutorial/reflect/class/index.html)
+
+From [JavaDoc](https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html) :
+
+> Instances of the class Class represent classes and interfaces in a running Java application.
+> An enum is a kind of class and an annotation is a kind of interface.
+> The primitive Java types, and the keyword void are also represented as Class objects.
+
+- 즉, 특정 타입 Class의 인스턴스.
+
+> Class has no public constructor.
+> Instead Class objects are constructed automatically by the Java Virtual Machine as classes are loaded and by calls to the defineClass method in the class loader.
+
+- Class 클래스는 public 생성자 존재하지 않고, JVM의 class loader에 의해 로드된다.
+
+> It is also possible to get the Class object for a named type (or for void) using a class literal.
+> See Section 15.8.2 of The Java™ Language Specification. For example:
+
+- 이 Class 객체는, 클래스 리터럴을 이용해 획득 가능하다.
+  - `System.out.println("The name of class Foo is: "+Foo.class.getName());`
+
+### HOW?
+
+> See org/example/generic/Item33TypeSafeHeterogeneousContainer.java
+
+### One more thing
+
+1. 실체화 불가능한 타입은, 해당 이종 컨테이너를 사용할수 없다.
+
+> 이를 해결하기 위해, SuperTypeToken 패턴을 사용할수 있다.
+
+> In Spring, 'ParameterizedTypeReference' is used to solve this problem.
+
+2. bounded type token을 사용하려면, Annotation API가 어떻게 하는지 확인 (Item39)
+
+```java
+    /**
+     * Returns this element's annotation for the specified type if such an annotation is present, else null.
+     * Throws: NullPointerException – if the given annotation class is null
+     */
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        Objects.requireNonNull(annotationClass);
+        return annotationClass.cast(declaredAnnotations().get(annotationClass));
+    }
+
+
+```

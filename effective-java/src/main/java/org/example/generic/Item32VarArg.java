@@ -3,7 +3,7 @@ package org.example.generic;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VarArgExam {
+public class Item32VarArg {
 
     public static void heapPollution(List<String>... strings) {
         // 가변인수(varArgs) 메서드 호출시, 해당 가변 인수를 담기위한 배열이 자동으로 생성됨.
@@ -19,6 +19,7 @@ public class VarArgExam {
         }
 
         String s = strings[0].get(0);
+
     }
 
     @SafeVarargs
