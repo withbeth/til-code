@@ -1,6 +1,5 @@
 package org.example.generic;
 
-import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,7 +10,7 @@ public class Item33TypeSafeHeterogeneousContainer {
 
     /**
      * 하고싶은것:
-     * 타입별로 즐겨찾는 인스턴스를 저장하고 검색하는 Favorites 클래스이 있으면 좋겠다.
+     * 타입별로 즐겨찾는 인스턴스를 저장하고 검색하는 Favorites 클래스가 있으면 좋겠다.
      * 이때, 각 타입의 Class 객체를 Key 역할로 사용.
      * 이는, class의 Class가 제네릭이기때문에 가능하다.
      * 즉, class 리터럴의 타입은, Class가 아닌, Class<T>
@@ -43,7 +42,6 @@ public class Item33TypeSafeHeterogeneousContainer {
         }
     }
 
-    AnnotatedElement.
 
     // Client
     public static void main(String[] args) {
@@ -67,6 +65,7 @@ public class Item33TypeSafeHeterogeneousContainer {
     /**
      * from Java tutorial
      * https://docs.oracle.com/javase/tutorial/extra/generics/literals.html
+     *
      * 하고싶은것:
      * - create a utility method that performs a database query,
      * - given as a string of SQL, and returns a collection of objects in the database that match that query.
