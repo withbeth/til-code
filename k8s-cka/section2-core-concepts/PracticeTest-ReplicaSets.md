@@ -1,0 +1,408 @@
+# Practice Test - ReplicaSets
+
+Note: All questions target the default namespace, unless specified otherwise.
+
+Practice Test Link: https://uklabs.kodekloud.com/topic/practice-test-replicasets-2/
+
+## Q1
+
+How many ReplicaSets exist on the system?
+In the current(default) namespace.
+
+```shell
+➜ kubectl get replicasets -A
+NAMESPACE NAME DESIRED CURRENT READY AGE
+kube-system local-path-provisioner-957fdf8bc 1 1 1 15m
+kube-system coredns-77ccd57875 1 1 1 15m
+kube-system metrics-server-54dc485875 1 1 1 15m
+kube-system traefik-84745cf649 1 1 1 15m
+```
+
+## Q2
+
+How about now? How many ReplicaSets do you see?
+We just made a few changes!
+
+```shell
+➜ kubectl get replicasets
+NAME DESIRED CURRENT READY AGE
+new-replica-set 4 4 0 3m17s
+```
+
+## Q3
+
+How many PODs are DESIRED in the new-replica-set?
+=> 4
+
+```shell
+$ kubectl describe replicasets new-replica-set
+Name: new-replica-set
+Namespace: default
+Selector: name=busybox-pod
+Labels: <none>
+Annotations: <none>
+Replicas: 4 current / 4 desired
+Pods Status: 0 Running / 4 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+Labels: name=busybox-pod
+Containers:
+busybox-container:
+Image: busybox777
+Port: <none>
+Host Port: <none>
+Command:
+sh
+-c
+echo Hello Kubernetes! && sleep 3600
+Environment: <none>
+Mounts: <none>
+Volumes: <none>
+Events:
+Type Reason Age From Message
+
+---
+
+Normal SuccessfulCreate 10m replicaset-controller Created pod: new-replica-set-sw4h6
+Normal SuccessfulCreate 10m replicaset-controller Created pod: new-replica-set-nbfs6
+Normal SuccessfulCreate 10m replicaset-controller Created pod: new-replica-set-g4xgz
+Normal SuccessfulCreate 10m replicaset-controller Created pod: new-replica-set-dpnwc
+```
+
+## Q4
+
+What is the image used to create the pods in the new-replica-set?
+=> busybox777
+
+## Q5
+
+How many PODs are READY in the new-replica-set?
+=> 0
+
+## Q6
+
+Why do you think new-replica-set is not READY?
+=> 4 Desired / 0 READY && SuccessfulCreate에서 멈춰있으니까, image가 제대로 작성되지 않아서?
+=> YES; you can get all pod status using get pods command.
+
+```shell
+➜ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+new-replica-set-nbfs6 0/1 ImagePullBackOff 0 16m
+new-replica-set-g4xgz 0/1 ImagePullBackOff 0 16m
+new-replica-set-dpnwc 0/1 ImagePullBackOff 0 16m
+new-replica-set-sw4h6 0/1 ImagePullBackOff 0 16m
+```
+
+## Q7
+
+Delete any one of the 4 PODs.
+
+```shell
+controlplane ~ ➜ kubectl delete new-replica-set-nbfs6
+error: the server doesn't have a resource type "new-replica-set-nbfs6"
+
+controlplane ~ ✖ kubectl delete pods new-replica-set-nbfs6
+pod "new-replica-set-nbfs6" deleted
+```
+
+=> delete시 kind(type) 명시 필요.
+
+## Q8
+
+How many PODs exist now?
+
+```shell
+➜ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+new-replica-set-dpnwc 0/1 ImagePullBackOff 0 17m
+new-replica-set-sw4h6 0/1 ImagePullBackOff 0 17m
+new-replica-set-g4xgz 0/1 ImagePullBackOff 0 17m
+new-replica-set-qwdx4 0/1 ImagePullBackOff 0 21s
+```
+
+=> 지워도, replicasets으로 인해 다시 복구된다.
+
+## Q9
+
+Why are there still 4 PODs, even after you deleted one?
+=> RepliacaSets ensure
+
+## Q10
+
+Create a ReplicaSet using the replicaset-definition-1.yaml file located at /root/.
+There is an issue with the file, so try to fix it.
+Name: replicaset-1
+
+```shell
+controlplane ~ ➜ cat /root/replicaset-definition-1.yaml
+apiVersion: v1
+kind: ReplicaSet
+metadata:
+name: replicaset-1
+spec:
+replicas: 2
+selector:
+matchLabels:
+tier: frontend
+template:
+metadata:
+labels:
+tier: frontend
+spec:
+containers: - name: nginx
+image: nginx
+```
+
+### TRY
+
+- try to create it first
+
+```shell
+controlplane ~ ➜ kubectl create -f /root/replicaset-definition-1.yaml
+error: resource mapping not found for name: "replicaset-1" namespace: "" from "/root/replicaset-definition-1.yaml": no matches for kind "ReplicaSet" in version "v1"
+ensure CRDs are installed first
+```
+
+- [ no ] spec.replicas should be spec.replicaNum?
+
+- [ no ] kind는 대문자가아니라 소문자여야 한다? like kind: pod
+
+- [ no ] template.metdata.name should exists?
+
+- [ no ] pod이 먼저 존재해야 한다?
+
+  - pod없으면 아예 생성을 못하나? ReplicaSet으로부터 생성가능해야 하지 않나?
+
+- [ no ] create -f 에 kind를 입력해야 한다?
+
+  - 파일 보면 알수 있으니까 그렇지 않을듯?
+
+- [ no ] metadata.label이 template.metadata.label과 같아야 한다?
+
+- [ no ] 순서가 중요하다? spec.tmpl, sepc.replicas, spec.selector
+
+### RESULT
+
+> apiVersion.
+>
+> apiVersion은 지맘대로 짓는것이 아니라, 해당 kind에 종속되어 있는듯하다? 적어도 ReplicaSet에 관해선?
+
+- you can see manual using 'explain' command
+
+#### : from `kubectl explain replicaset`
+
+```bash
+apiVersion <string>
+APIVersion defines the versioned schema of this representation of an object.
+Servers should convert recognized schemas to the latest internal value, and
+may reject unrecognized values. More info:
+https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+```
+
+### one more thing
+
+- then why apiVersion should be apps/v1?
+
+- document?
+
+## Q11
+Fix the issue in the replicaset-definition-2.yaml file and create a ReplicaSet using it.
+This file is located at /root/.
+
+[x] try first
+```bash
+➜  kubectl create -f /root/replicaset-definition-2.yaml 
+The ReplicaSet "replicaset-2" is invalid: spec.template.metadata.labels: Invalid value: map[string]string{"tier":"nginx"}: `selector` does not match template `labels`
+```
+
+> rs의 spec.selector.matchLabels는 pod tmpl의 label과 일치해야 한다.
+```yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: replicaset-2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      tier: nginx
+  template:
+    metadata:
+      labels:
+        tier: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+```
+
+## Q12
+Delete the two newly created ReplicaSets - replicaset-1 and replicaset-2
+
+```bash
+controlplane ~ ➜  kubectl delete rs replicaset-1 replicaset-2
+replicaset.apps "replicaset-1" deleted
+replicaset.apps "replicaset-2" deleted
+```
+
+## Q13
+Fix the original replica set new-replica-set to use the correct busybox image.
+
+Either 
+1) delete and recreate the ReplicaSet or 
+2) Update the existing ReplicaSet and then delete all PODs
+, so new ones with the correct image will be created.
+
+### Solution
+
+> try to use `replace` cmd
+
+```bash
+ontrolplane ~ ➜  kubectl describe rs new-replica-set
+Name:         new-replica-set
+Namespace:    default
+Selector:     name=busybox-pod
+Labels:       <none>
+Annotations:  <none>
+Replicas:     4 current / 4 desired
+Pods Status:  0 Running / 4 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  name=busybox-pod
+  Containers:
+   busybox-container:
+    Image:      busybox777
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      sh
+      -c
+      echo Hello Kubernetes! && sleep 3600
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Events:
+  Type    Reason            Age   From                   Message
+  ----    ------            ----  ----                   -------
+  Normal  SuccessfulCreate  30m   replicaset-controller  Created pod: new-replica-set-xzg7r
+  Normal  SuccessfulCreate  30m   replicaset-controller  Created pod: new-replica-set-dsxqh
+  Normal  SuccessfulCreate  30m   replicaset-controller  Created pod: new-replica-set-pjbhh
+  Normal  SuccessfulCreate  30m   replicaset-controller  Created pod: new-replica-set-nvldq
+  Normal  SuccessfulCreate  28m   replicaset-controller  Created pod: new-replica-set-95p45
+```
+
+```yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: new-replica-set
+spec:
+  template: 
+    metadata:
+      labels:
+        name: busybox-pod
+    spec:
+      containers:
+      - name: busybox
+        image: busybox
+  selector: 
+    matchLables:
+      name: busybox-pod
+  replicas: 4
+```
+
+#### [x] replace하기위해 잘못된 rs의 definition yaml file 작성
+
+- problem : 그런데 현재 잘못된 rs의 definition yaml file이 없다.
+- solution : `kubectl get TYPE NAME -o yaml`
+
+```yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  creationTimestamp: "2024-02-10T14:08:36Z"
+  generation: 1
+  name: new-replica-set
+  namespace: default
+  resourceVersion: "1078"
+  uid: 86be8894-57a3-4b58-8f5b-0e601f0a4fe0
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      name: busybox-pod
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: busybox-pod
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - echo Hello Kubernetes! && sleep 3600
+        image: busybox777 # 여기만 고쳐서 쓸거임
+        imagePullPolicy: Always
+        name: busybox-container
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status:
+  fullyLabeledReplicas: 4
+  observedGeneration: 1
+  replicas: 4
+```
+
+#### [x] replace는, 어떻게 하나?
+
+1) delete all pods first
+
+
+```bash
+# Delete pods and services with label name=myLabel
+$ kubectl delete pods,services -l name=myLabel
+
+$ kubectl delete pods -l name=busybox-pod
+
+```
+
+2) replace 
+
+```bash
+$ kubectl replace -f FILENAME [options]
+
+$ kubectl replace -f new-replia-set.yaml 
+replicaset.apps/new-replica-set replaced
+```
+
+- 그런데, filename과 이름을 맞춰야 하나?
+
+  - 파일안에 name을 명시하니, 굳이 맞출 필요 없다.
+
+- 근데, replace해도, pod이 그대로 인데?
+
+  - then delete all pods and replace again
+
+
+## Q14
+Scale the ReplicaSet to 5 PODs.
+
+Use `kubectl scale` command or 
+edit the replicaset using `kubectl edit replicaset`.
+
+> replace 이용해 해결
+
+## Q15
+Now scale the ReplicaSet down to 2 PODs.
+
+Use `kubectl scale` command or 
+edit the replicaset using `kubectl edit replicaset`.
+
+> replace 이용해 해결
+
+
